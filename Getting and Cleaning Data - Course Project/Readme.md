@@ -17,7 +17,9 @@ This folder contains the following files
 
 The Codebook describes the variables involved in the data analysis.
 
-The R script file generates two arranged data sets; "everest" and "everest_shrunk". "UCI HAR Dataset" is automatically downloaded from the Internet when you run this script, so you do not have to get it from the source.
+The R script file generates two arranged data sets; "everest" and "everest_shrunk". "everest_shunk" is the tidy dataset. "everest" is the original dataset.
+
+"UCI HAR Dataset" is automatically downloaded from the Internet when you run this script, so you do not have to get it from the source.
 
 Refer to the Codebook for further information on datasets "everest" and "everest\_shrunk".
 
