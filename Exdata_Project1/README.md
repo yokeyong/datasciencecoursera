@@ -1,6 +1,6 @@
 ## Exploratory Data Analysis - Course Project 1
 
-This folder contains the corresponding plots for the assignment. All plots are provided in 480x480 pixels and in png file format.
+This folder contains submission of 4 plots for the assignment. All plots are provided in 480x480 pixels and in png file format.
 
 The R script files are named "plot1.R", "plot2.R", "plot3.R" and "plot4.R", corresponding to their respective plot files.
 

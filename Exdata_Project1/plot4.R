@@ -2,6 +2,8 @@
 
 png(filename="plot4.png", type = "cairo")
 
+## Reads in the data for 2007/02/01 and 2007/02/02
+
 data=read.table("household_power_consumption.txt", sep=";", 
                 stringsAsFactors=FALSE, skip=66637, 
                 nrow=2880)
