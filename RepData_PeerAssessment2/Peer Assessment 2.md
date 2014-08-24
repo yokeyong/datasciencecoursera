@@ -1,0 +1,468 @@
+# Reproducible Research - Peer Assignment 2
+=========================================
+
+## Sypnosis
+
+This Report is split into 2 Parts, and shall give an analysis on the following questions:
+
+#### Part 1 of Report
+=====================
+
+Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+
+#### Part 2 of Report
+=====================
+
+Across the United States, which types of events have the greatest economic consequences?
+
+The methodology will, mainly, lie in aggregating the data from 1950 to 1999, and using the sum of the respective observations to do the analysis. Aggregation is the easiest way to see which events are the most destructive in the history, thereby directing our resources to the appropriate parts of the nation's relief efforts.
+
+## Data Processing
+
+The rationale behind the data processing for the analysis is provided under every question in the 2 Parts of this Report.
+
+
+```r
+## Download the file, use bunzip2 from R.utils to unzip the file, and read in the data. In my case, I renamed the source file as "Storm.csv".
+
+data = read.csv("Storm.csv", stringsAsFactors=FALSE)
+```
+
+### Part 1 of Report - Is the US Population sufficiently insulated from disasters?
+
+Let us turn our focus to population health first. Often, the biggest damage is to structures and properties. This analysis come from the perspective of Direct Fatalities and Indirect Fatalities. In a sense, Direct Fatalities mean a reduction in our labour force, and to a great extent, the mental health of the families who lost their beloved and the increasing renumeration that goes to relief efforts, which represents lost opportunity to other policies. Indirect Fatalities means lasting damage that may go uunnoticed, which affects a quality and healthy labour force that maximizes the nation's productive efficiency, in turn slowing economic growth. Only by knowing where the damage occurs the most will we be able to provide immediate healthcare and aid to the victims, so as to minimize deaths. My analysis will highlight the pressing information that we should take notice of, through the top 5 Events that comes from the results, so as to focus preventive measures on the right factors. What is the event that cause the greatest damage to population health?
+
+
+```r
+## Transform the data first
+
+transform = subset(data, select = c("STATE__", "BGN_DATE", 
+                                    "BGN_TIME", "COUNTYNAME",
+                                    "STATE", "EVTYPE",
+                                    "FATALITIES", "INJURIES"))
+
+head(transform)
+```
+
+```
+##   STATE__           BGN_DATE BGN_TIME COUNTYNAME STATE  EVTYPE FATALITIES
+## 1       1  4/18/1950 0:00:00     0130     MOBILE    AL TORNADO          0
+## 2       1  4/18/1950 0:00:00     0145    BALDWIN    AL TORNADO          0
+## 3       1  2/20/1951 0:00:00     1600    FAYETTE    AL TORNADO          0
+## 4       1   6/8/1951 0:00:00     0900    MADISON    AL TORNADO          0
+## 5       1 11/15/1951 0:00:00     1500    CULLMAN    AL TORNADO          0
+## 6       1 11/15/1951 0:00:00     2000 LAUDERDALE    AL TORNADO          0
+##   INJURIES
+## 1       15
+## 2        0
+## 3        2
+## 4        2
+## 5        2
+## 6        6
+```
+
+The above is an example output of what is in the data set that is used for this analysis.
+
+
+```r
+event_type = unique(transform$EVTYPE)
+all_fatal = data.frame()
+all_injure = data.frame()
+
+for (i in event_type){
+        
+        temp = subset(transform, transform$EVTYPE == i)
+        fatal = sum(temp$FATALITIES)
+        injure = sum(temp$INJURIES)
+        all_fatal = rbind.data.frame(all_fatal, fatal)
+        all_injure = rbind.data.frame(all_injure, injure)
+        
+}
+
+total = cbind.data.frame(event_type, all_fatal, all_injure)
+colnames(total) = c("event", "fatalities", "injuries")
+```
+
+After aggregating the fatalities and injuries across the United States, with respect to the disastrous events that happened throughout from 1950 to 1995, I will select the 5 events that has the most impact on the population health, with descending order.
+
+2 sets of data will be used for Direct Fatalities and Indirect Fatalities. Ultimately, this part of analysis will depend on two plots to address the issue.
+
+### Part 1 of Analysis - Results
+
+
+```r
+at_fatalities = total[order(total$fatalities, decreasing=TRUE),]
+at_injuries = total[order(total$injuries, decreasing=TRUE),]
+top_five_fatalities = at_fatalities[1:5,]
+top_five_injuries = at_injuries[1:5,]
+
+par(mfrow = c(1,2))
+
+ylim = c(0, 1.15*max(top_five_fatalities$fatalities))
+
+p1 = barplot(top_five_fatalities$fatalities,
+             main = "Top 5 Events - Direct Fatalities",
+             col = c("red", "green", "yellow", "blue", "purple"),
+             xlab = "Events", ylab = "Total Direct Fatalities",
+             ylim=ylim)
+
+labels = as.character(top_five_fatalities$event)
+labels2 = top_five_fatalities$fatalities
+
+text(cex=0.6, x=p1-0.25, y=-2, labels, xpd=TRUE, srt=45, adj=1.1)
+text(labels2, label = labels2, pos = 3, cex = 0.8)
+
+ylim = c(0, 1.15*max(top_five_fatalities$injuries))
+
+p2 = barplot(top_five_injuries$injuries,
+             main = "Top 5 Events - Indirect Fatalities",
+             col = c("red", "green", "yellow", "blue", "purple"),
+             xlab = "Events", ylab = "Total Indirect Fatalities",
+             ylim=ylim)
+
+labels = as.character(top_five_injuries$event)
+labels2 = top_five_injuries$injuries
+
+text(cex=0.5, x=p2-0.25, y=-2, labels, xpd=TRUE, srt=45, adj=1.1)
+text(labels2, label = labels2, pos = 3, cex = 0.8)
+```
+
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
+
+The plots are done with aggregation based across the whole United States. We can see that the most destructive event to the population health is a tornado, which ranked first in causing direct fatalities and indirect fatalities. Hence, tornadoes should be the first event that we should make our efforts to predict and detect.
+
+We can see that a TSTM (thunderstorm) wind event is on the next top event that causes Indirect Fatalities. A side note is that floods and excessive heat shares the nearly same fatality rate, which suggest that these events should be on a lower priority, in search for other more directly, implicating events.
+
+Now we turn our attention to Direct Fatalities.
+
+Further observations lie on that the subsequent 4 ranked events for direct fatalities are all sudden events; meaning that these events cause deaths once they overwhelm the human limits. An example would be excessive heat, where too much would obviously cause a life threatening heat stroke. Another example would be a flash flood, which could instantly drown a person if he/she is trapped in debris caused by the damage.
+
+What for the indirect fatalities? We do know that tornadoes would gather the unfortunate victim up in the wind, with a high possibility of subsequent crashes with the debris in the tornado. We observe the repeat offender, excessive heat, to be involved in direct fatalities too. This should be the second event that we should strive to prevent. Immediate measures should be recommended in subsequent policies to combat this unseemingly low fatality event. We can also see lightning as another repeat offender across direct and indirect fatalities. Subsequent preventive measures should be researched to protect the population from such an event.
+
+### Part 2 of Report - Where do the gravest economic consequences come from?
+
+We cannot stop natural disasters, but only to prevent more damage. We know that population health, to a certain extent, will affect the economical health of the country. The most common measures of growth is capital, technology/innovation, and of course, human capital. Structural and crop damage, one that affects production and the other our basic needs for food, are not analyzed in the previous question, and as such, we will expand our focus to include these question: What is the event that cause the greatest economical damage?
+
+
+```r
+## Transform the data first
+
+transform = subset(data, select = c("STATE__", "BGN_DATE",
+                                    "BGN_TIME", "COUNTYNAME",
+                                    "STATE", "EVTYPE",
+                                    "FATALITIES", "INJURIES",
+                                    "PROPDMG", "PROPDMGEXP",
+                                    "CROPDMG", "CROPDMGEXP"))
+
+print(head(transform))
+```
+
+```
+##   STATE__           BGN_DATE BGN_TIME COUNTYNAME STATE  EVTYPE FATALITIES
+## 1       1  4/18/1950 0:00:00     0130     MOBILE    AL TORNADO          0
+## 2       1  4/18/1950 0:00:00     0145    BALDWIN    AL TORNADO          0
+## 3       1  2/20/1951 0:00:00     1600    FAYETTE    AL TORNADO          0
+## 4       1   6/8/1951 0:00:00     0900    MADISON    AL TORNADO          0
+## 5       1 11/15/1951 0:00:00     1500    CULLMAN    AL TORNADO          0
+## 6       1 11/15/1951 0:00:00     2000 LAUDERDALE    AL TORNADO          0
+##   INJURIES PROPDMG PROPDMGEXP CROPDMG CROPDMGEXP
+## 1       15    25.0          K       0           
+## 2        0     2.5          K       0           
+## 3        2    25.0          K       0           
+## 4        2     2.5          K       0           
+## 5        2     2.5          K       0           
+## 6        6     2.5          K       0
+```
+
+The above is an example output of what is in the data set that is used for this analysis.
+
+Property and crop damage is measured in currency terms. From page 12 of the documentation as provided by National Weather Service (link: <https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf>), we can see that "PROPDMGEXP" and "CROPDMGEXP" provided the indicators of the size of the damage. "K" stands for thousands, "M" stands for millions, and "B" stands for billions. 
+
+
+```r
+print(unique(transform$PROPDMGEXP))
+```
+
+```
+##  [1] "K" "M" ""  "B" "m" "+" "0" "5" "6" "?" "4" "2" "3" "h" "7" "H" "-"
+## [18] "1" "8"
+```
+
+```r
+print(unique(transform$CROPDMGEXP))
+```
+
+```
+## [1] ""  "M" "K" "m" "B" "?" "0" "k" "2"
+```
+
+If one takes a look at the values that appears in the indicators, we can see that there are not only "K", "M" and "B" that appears in the printout above. Accordingly to page 12 the documentation that comes with the dataset used, 
+
+*" When damage is due to more than one element of the storm, indicate, when possible, the amount of damage caused by each 
+element.  If the dollar amount of damage is unknown, or not available, check the "no information available" box."*
+
+We can see that there are inaccurancies that arise from the collection of the data. As such, this analysis will try to take the figures that makes the most sense, and yet able to represent the bulk of this analysis, which is "K", "M" and "B".
+
+However, we will have to know how many of these values we are dealing with. As such, I will do a simple check on the total amount of values in this dataset.
+
+
+```r
+## For Property Damage Expenses
+
+table(grepl("B", transform$PROPDMGEXP))
+```
+
+```
+## 
+##  FALSE   TRUE 
+## 902257     40
+```
+
+```r
+table(grepl("M", transform$PROPDMGEXP))
+```
+
+```
+## 
+##  FALSE   TRUE 
+## 890967  11330
+```
+
+```r
+table(grepl("K", transform$PROPDMGEXP))
+```
+
+```
+## 
+##  FALSE   TRUE 
+## 477632 424665
+```
+
+```r
+## For Crop Damage Expenses
+
+table(grepl("B", transform$CROPDMGEXP))
+```
+
+```
+## 
+##  FALSE   TRUE 
+## 902288      9
+```
+
+```r
+table(grepl("M", transform$CROPDMGEXP))
+```
+
+```
+## 
+##  FALSE   TRUE 
+## 900303   1994
+```
+
+```r
+table(grepl("K", transform$CROPDMGEXP))
+```
+
+```
+## 
+##  FALSE   TRUE 
+## 620465 281832
+```
+
+For example, if we were to analyze on property damage itself, there is a total of 436,035 values (containing "K", "M" and "B")to be utilised for this analysis. This means that out of 902,297 values, only 48% of the data set will be used. However, subject to further clarification from National Weather Service, further determination of the remaining indicators is of speculation than an analysis.
+
+#### An Obvious Problem?
+=======================
+
+For the sharp eyed, we can immediately see that in order to do an analysis based on such an assumption, we are effectively disregarding the fact that the previous analysis on Population Health used all the variables.
+
+This is true for an analysis on population health, and I did mention that population health, is in fact, an important indicator that possibly will affect the labour market and the swift recovery of the economy.
+
+However, monetary terms are measured on a different scale. Expenses that arise on damages are based on lost opportunity costs that could be better utilized for the next best alternative. As mentioned before, the data collection is not complete and we could not determine information that borders on speculation. For the purpose of determining economic losses from property and crop damage, therefore, magnitude of the losses in monetary terms should take priority.
+
+Hence, the number of variables used for the analysis on property and crop damage will differ from the analysis on population health.
+
+#### Continuation of the Analysis
+================================
+
+For the monetary damage, we shall measure all amounts in terms of millions, with approximation done to 4 significant figures, since this number should be enough to represent the damage, and most of the damage should actually result in millions, after aggregation is done.
+
+However, we have to do the conversion of the property damage and crop damage to their respective monetary damage first.
+
+(Reference: M = 1, K = 0.001, B = 1000)
+
+
+```r
+## Sort the data to suit our analysis
+
+labels = c("K", "M", "B")
+propdmg_data = data.frame()
+cropdmg_data = data.frame()
+
+for (i in labels) {
+        
+        temp = subset(transform, transform$PROPDMGEXP == i)
+        temp2 = subset(transform, transform$CROPDMGEXP == i)
+        propdmg_data = rbind(propdmg_data, temp)
+        cropdmg_data = rbind(cropdmg_data, temp2)
+        
+}
+
+## Replace the indicators with their respective values
+
+propdmg_data$PROPDMGEXP = gsub("K", "0.001", 
+                               propdmg_data$PROPDMGEXP)
+propdmg_data$PROPDMGEXP = gsub("M", "1", propdmg_data$PROPDMGEXP)
+propdmg_data$PROPDMGEXP = gsub("B", "1000", 
+                               propdmg_data$PROPDMGEXP)
+cropdmg_data$CROPDMGEXP = gsub("K", "0.001", 
+                               cropdmg_data$CROPDMGEXP)
+cropdmg_data$CROPDMGEXP = gsub("M", "1", cropdmg_data$CROPDMGEXP)
+cropdmg_data$CROPDMGEXP = gsub("B", "1000", 
+                               cropdmg_data$CROPDMGEXP)
+
+## Tidy up the data to the parts we need for the analysis
+
+propdmg_data = subset(propdmg_data, select = c("EVTYPE",
+                                               "PROPDMG",
+                                               "PROPDMGEXP"))
+cropdmg_data = subset(cropdmg_data, select = c("EVTYPE",
+                                               "CROPDMG",
+                                               "CROPDMGEXP"))
+propdmg_data$PROPDMGEXP = as.numeric(propdmg_data$PROPDMGEXP)
+cropdmg_data$CROPDMGEXP = as.numeric(cropdmg_data$CROPDMGEXP)
+
+## Next, we shall do the aggregation.
+
+damage = with(propdmg_data, PROPDMG*PROPDMGEXP)
+propdmg_multiply = cbind.data.frame(propdmg_data$EVTYPE, damage)
+damage = with(cropdmg_data, CROPDMG*CROPDMGEXP)
+cropdmg_multiply = cbind.data.frame(cropdmg_data$EVTYPE, damage)
+colnames(propdmg_multiply) = c("event", "damage")
+colnames(cropdmg_multiply) = c("event", "damage")
+
+## Finally, we shall do an aggregation of the data throughout each individual event.
+
+prop_event = unique(propdmg_multiply$event)
+crop_event = unique(cropdmg_multiply$event)
+all_propdmg = data.frame()
+all_cropdmg = data.frame()
+
+for (i in crop_event){
+        
+        temp = subset(cropdmg_multiply, 
+                      cropdmg_multiply$event == i)
+        cropdmg = sum(temp$damage)
+        all_cropdmg = rbind.data.frame(all_cropdmg, cropdmg)
+        
+}
+
+for (i in prop_event){
+        
+        temp = subset(propdmg_multiply, 
+                      propdmg_multiply$event == i)
+        propdmg = sum(temp$damage)
+        all_propdmg = rbind.data.frame(all_propdmg, propdmg)
+        
+}
+
+all_propdmg = cbind.data.frame(prop_event, all_propdmg)
+all_cropdmg = cbind.data.frame(crop_event, all_cropdmg)
+colnames(all_propdmg) = c("event", "propdmg")
+colnames(all_cropdmg) = c("event", "cropdmg")
+```
+
+### Part 2 of Report - Results
+
+
+```r
+at_propdmg = all_propdmg[order(all_propdmg$propdmg, 
+                               decreasing=TRUE),]
+at_cropdmg = all_cropdmg[order(all_cropdmg$cropdmg, 
+                               decreasing=TRUE),]
+top_five_propdmg = at_propdmg[1:5,]
+top_five_cropdmg = at_cropdmg[1:5,]
+```
+
+The first plot below is the previous plot from Part 1 of the Report, and the second plot that follows after details the total property and crop damage.
+
+
+```r
+par(mfrow=c(1,2))
+
+ylim = c(0, 1.15*max(top_five_fatalities$fatalities))
+
+p1 = barplot(top_five_fatalities$fatalities, 
+             main = "Top 5 Events - Direct Fatalities",
+             col = c("red", "green", "yellow", "blue", "purple"),
+             xlab = "Events", ylab = "Total Direct Fatalities",
+             ylim=ylim)
+
+labels = as.character(top_five_fatalities$event)
+labels2 = top_five_fatalities$fatalities
+
+text(cex=0.6, x=p1-0.25, y=-2, labels, xpd=TRUE, srt=45, adj=1.1)
+text(labels2, label = labels2, pos = 3, cex = 0.8)
+
+ylim = c(0, 1.15*max(top_five_fatalities$injuries))
+
+p2 = barplot(top_five_injuries$injuries, 
+             main = "Top 5 Events - Indirect Fatalities", 
+             col = c("red", "green", "yellow", "blue", "purple"),
+             xlab = "Events", ylab = "Total Indirect Fatalities",
+             ylim=ylim)
+
+labels = as.character(top_five_injuries$event)
+labels2 = top_five_injuries$injuries
+
+text(cex=0.5, x=p2-0.25, y=-2, labels, xpd=TRUE, srt=45, adj=1.1)
+text(labels2, label = labels2, pos = 3, cex = 0.8)
+```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-101.png) 
+
+```r
+par(mfrow=c(1,2))
+
+ylim = c(0, 1.15*max(top_five_propdmg$propdmg))
+
+p3 = barplot(top_five_propdmg$propdmg, 
+             main = "Top 5 Events - Property Damage", 
+             col = c("red", "green", "yellow", "blue", "purple"),
+             xlab = "Events", 
+             ylab = "Total Property Damage (Millions)",
+             ylim=ylim)
+
+labels = as.character(top_five_propdmg$event)
+labels2 = round(top_five_propdmg$propdmg, digits = 2)
+
+text(cex=0.6, x=p3-0.25, y=-2, labels, xpd=TRUE, srt=45, adj=1.1)
+text(labels2, label = labels2, pos = 3, cex = 0.6)
+
+ylim = c(0, 1.15*max(top_five_cropdmg$cropdmg))
+
+p4 = barplot(top_five_cropdmg$cropdmg, 
+             main = "Top 5 Events - Crop Damage", 
+             col = c("red", "green", "yellow", "blue", "purple"),
+             xlab = "Events", 
+             ylab = "Total Crop Damage (Millions)", ylim=ylim)
+
+labels = as.character(top_five_cropdmg$event)
+labels2 = round(top_five_cropdmg$cropdmg, digits=2)
+
+text(cex=0.6, x=p4-0.25, y=-2, labels, xpd=TRUE, srt=45, adj=1.1)
+text(labels2, label = labels2, pos = 3, cex = 0.6)
+```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-102.png) 
+
+Previously, we can see that the events that caused damage to population health are tornadoes, and a surprise contender, excessive heat.
+
+For property damage, a flood cause the structural loss, with a hurricane/typhoon on the second spot. Buildings crumble from the massive stress that a flood brings, while a hurricane may have a specific route of destruction, which reduces structural damage. However, a flood does not cause as much damage as a drought when it comes to crop damage. This is to be expected; crops die from water loss more quickly than the possibility of a flood rooting out the crops. 
+
+## Conclusion
+
+Tornadoes and excessive heat are one of the top five events to cause direct and indirect fatalities to the population. Floods and droughts are the prominent events that causes structural loss, affecting the production capacity of the economy.
+
+This concludes the Report (and Assignment).
